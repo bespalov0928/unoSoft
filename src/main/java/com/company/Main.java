@@ -1,34 +1,29 @@
 package com.company;
 
-import java.io.*;
-import java.net.URL;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
 
 public class Main {
 
     public static void main(String[] args) {
-        String gzipFile = "https://github.com/PeacockTeam/new-job/releases/download/v1.0/lng-4.txt.gz";
+        String inPath = "lng.txt";
         String newFileTxt = "out.txt";
-        if (args.length > 0) newFileTxt = args[0];
-        decompressGzipFileNew(gzipFile, newFileTxt);
+        if (args.length > 0) inPath = args[0];
+        decompressGzipFileNew(inPath, newFileTxt);
     }
 
     private static void decompressGzipFileNew(String gzipFile, String newFile) {
-//        ArrayList<String> list = new ArrayList<>();
-//        StringBuilder stringBuilder1 = new StringBuilder().append("\"858\";").append("\"56\";").append("\"45\";").append("\"74\";");
-//        list.add(stringBuilder1.toString());
-//        StringBuilder stringBuilder2 = new StringBuilder().append("\"85\";").append("\"10\";").append("\"45\";").append("\"74\";");
-//        list.add(stringBuilder2.toString());
-
         try {
-            InputStream fis = new URL(gzipFile).openStream();
-            GZIPInputStream gis = new GZIPInputStream(fis);
-            Stream<String> out = new BufferedReader(new InputStreamReader(gis)).lines().filter(s -> !Pattern.compile("\\d+\"\\d+").matcher(s).find());
+            File file = new File(gzipFile);
+            Stream<String> out = Files.lines(Paths.get(file.getAbsolutePath())).filter(s -> !Pattern.compile("\\d+\"\\d+").matcher(s).find());
 
             // храним результат в виде списка множеств для уникальности: [номер_группы -> [строки_группы]]
             List<Set<String>> groups = new ArrayList<>();
@@ -74,7 +69,7 @@ public class Main {
                 }
             });
 
-            gis.close();
+//            gis.close();
 
             var listTrim = groups.stream().filter(lst -> lst.size() > 1).collect(Collectors.toList());
             int totalCount = listTrim.size();
