@@ -28,8 +28,7 @@ public class Main {
         try {
             InputStream fis = new URL(gzipFile).openStream();
             GZIPInputStream gis = new GZIPInputStream(fis);
-            Stream<String> out = new BufferedReader(new InputStreamReader(gis)).lines();
-            Set<String> lists = out.collect(Collectors.toSet());
+            Stream<String> out = new BufferedReader(new InputStreamReader(gis)).lines().filter(s -> !Pattern.compile("\\d+\"\\d+").matcher(s).find());
 
             // храним результат в виде списка множеств для уникальности: [номер_группы -> [строки_группы]]
             List<Set<String>> groups = new ArrayList<>();
@@ -37,7 +36,7 @@ public class Main {
             List<Map<String, Integer>> parts = new ArrayList<>();
 
 
-            lists.stream().filter(s -> !Pattern.compile("\\d+\"\\d+").matcher(s).find()).forEach(new Consumer<String>() {
+            out.forEach(new Consumer<String>() {
                 @Override
                 public void accept(String line) {
                     String[] columns = getColumnsOf(line);
@@ -77,24 +76,16 @@ public class Main {
 
             gis.close();
 
-            FileOutputStream fos = new FileOutputStream(newFile);
-            Integer i = 0;
             var listTrim = groups.stream().filter(lst -> lst.size() > 1).collect(Collectors.toList());
             int totalCount = listTrim.size();
-            listTrim.stream().forEach(new Consumer<Set<String>>() {
-//            groups.stream().filter(lst -> lst.size() > 1).forEach(new Consumer<Set<String>>() {
-                @Override
-                public void accept(Set<String> group) {
-                    try {
-                        fos.write(new StringBuilder("\nГруппа ").append(groups.indexOf(group)).append("\n").toString().getBytes());
-                        for (String val : group) {
-                            fos.write(new StringBuilder(val).append("\n").toString().getBytes());
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+
+            FileOutputStream fos = new FileOutputStream(newFile);
+            StringBuilder str = new StringBuilder();
+            for (int i = 0; i<listTrim.size(); i++){
+                str.append(System.lineSeparator()).append(i).append(System.lineSeparator());
+                listTrim.get(i).stream().forEach(s->str.append(s).append(System.lineSeparator()));
+            }
+            fos.write(str.toString().getBytes());
             fos.close();
             System.out.println(String.format("Total count:%s", totalCount));
         } catch (IOException e) {
